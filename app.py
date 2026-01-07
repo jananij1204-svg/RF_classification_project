@@ -1,53 +1,36 @@
 import streamlit as st
 import pickle
-import pandas as pd
 import numpy as np
-
-MODEL_PATH = "/mnt/data/model (1).pkl"
 
 @st.cache_resource
 def load_model():
-    with open(MODEL_PATH, "rb") as f:
-        return pickle.load(f)
+    with open("model (1).pkl", "rb") as file:
+        return pickle.load(file)
 
 model = load_model()
 
-st.title("🏡 House Price Prediction App")
+st.title("Random Forest Classifier")
 
-# Extract feature names from pipeline
-preprocess = model.named_steps["preprocess"]
+st.write(f"Model expects {model.n_features_in_} features")
 
-num_features = preprocess.transformers_[0][2]
-cat_features = preprocess.transformers_[1][2]
+# ---- INPUTS (6 FEATURES) ----
+f1 = st.number_input("Feature 1", value=0.0)
+f2 = st.number_input("Feature 2", value=0.0)
+f3 = st.number_input("Feature 3", value=0.0)
+f4 = st.number_input("Feature 4", value=0.0)
+f5 = st.number_input("Feature 5", value=0.0)
+f6 = st.number_input("Feature 6", value=0.0)
 
-st.subheader("Enter House Details")
+# Combine inputs in EXACT order
+input_data = np.array([[f1, f2, f3, f4, f5, f6]])
 
-input_data = {}
-
-# Numeric Inputs
-st.markdown("### 🔢 Numeric Features")
-for col in num_features:
-    input_data[col] = st.number_input(
-        col.replace("_", " ").title(),
-        value=0.0,
-        format="%.2f"
-    )
-
-# Categorical Inputs
-st.markdown("### 🔠 Categorical Features")
-for col in cat_features:
-    input_data[col] = st.selectbox(
-        col.replace("_", " ").title(),
-        ["Yes", "No", "Good", "Average", "Poor", "Type1", "Type2"]
-    )
-
-# Convert to DataFrame
-df = pd.DataFrame([input_data])
-
-# Predict Button
-if st.button("Predict Price"):
+# ---- PREDICT ----
+if st.button("Predict"):
     try:
-        prediction = model.predict(df)[0]
-        st.success(f"🏠 Estimated House Price: ₹ {prediction:,.2f}")
+        prediction = model.predict(input_data)[0]
+        probability = model.predict_proba(input_data)
+
+        st.success(f"Prediction: {prediction}")
+        st.write("Prediction probabilities:", probability)
     except Exception as e:
-        st.error(f"Prediction failed: {e}")
+         st.error(f"Error during prediction: {e}")
